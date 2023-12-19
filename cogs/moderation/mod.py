@@ -113,10 +113,16 @@ class Moderation(commands.Cog):
     @commands.hybrid_command(name="moveall", description="Move all members in current channel to another channel.")
     @has_permission("administrator")
     async def moveall(self, ctx: commands.Context, old_channel: discord.VoiceChannel, new_channel: discord.VoiceChannel):
+        if len(old_channel.members) > 10:
+            message = ctx.reply(embed=Embed("info", "Starting to move members, This may take a while."))
         for member in old_channel.members:
             await member.move_to(new_channel, reason="Moveall command.")
 
-        await ctx.reply(embed=Embed("success", f'Moved all members from {old_channel.mention} to {new_channel.mention}.'))
+        embed = Embed("success", f'Moved all members from {old_channel.mention} to {new_channel.mention}.')
+        if message:
+            await message.edit(embed=embed)
+        else:
+            await ctx.reply(embed=embed)
         
     @commands.hybrid_group(name="role", fallback="modify", description="Modify a member's roles")
     @app_commands.describe(member="The member to edit.", role="The role to give/remove.")
@@ -133,79 +139,79 @@ class Moderation(commands.Cog):
     @app_commands.describe(role="The role to look for", assign_role="The role to give.")
     @has_permission("manage_roles")
     async def role_has(self, ctx: commands.Context, role: discord.Role, assign_role: discord.Role):
-        await ctx.send(embed=Embed("info", "Starting to add roles, This may take a while."))
+        message = await ctx.reply(embed=Embed("info", "Starting to add roles, This may take a while."))
         added = 0
         for member in ctx.guild.members:
             if role in member.roles:
                 await member.add_roles(assign_role, reason="Role has command")
                 added += 1
 
-        await ctx.reply(embed=Embed("success", f"Gave the role {assign_role.mention} to {added} people."))
+        await message.edit(embed=Embed("success", f"Gave the role {assign_role.mention} to {added} people."))
         
     @role.command(name="has_remove", description="Removes a role from members with a specific role.")
     @app_commands.describe(role="The role to look for", remove_role="The role to remove.")
     @has_permission("manage_roles")
     async def role_hasremove(self, ctx: commands.Context, role: discord.Role, remove_role: discord.Role):
-        await ctx.send(embed=Embed("info", "Starting to remove roles, This may take a while."))
+        message = await ctx.reply(embed=Embed("info", "Starting to remove roles, This may take a while."))
         removed = 0
         for member in ctx.guild.members:
             if role in member.roles:
                 await member.remove_roles(remove_role, reason="Role has remove command")
                 removed += 1
 
-        await ctx.reply(embed=Embed("success", f"Removed the role {remove_role.mention} from {removed} people."))   
+        await message.edit(embed=Embed("success", f"Removed the role {remove_role.mention} from {removed} people."))   
         
     @role.command(name="humans", description="Adds a role to every human in the server.")
     @app_commands.describe(role="The role to add.")
     @has_permission("manage_roles")
     async def role_humans(self, ctx: commands.Context, role: discord.Role):
-        await ctx.send(embed=Embed("info", "Starting to add roles, This may take a while."))
+        message = await ctx.reply(embed=Embed("info", "Starting to add roles, This may take a while."))
         added = 0
         for member in ctx.guild.members:
             if member.bot == False:
                 await member.add_roles(role, reason="Role humans command")
                 added += 1
 
-        await ctx.reply(embed=Embed("success", f"Added the role {role.mention} to {added} people."))   
+        await message.edit(embed=Embed("success", f"Added the role {role.mention} to {added} people."))   
 
     @role.command(name="humans_remove", description="Removes a role from every human in the server.")
     @app_commands.describe(role="The role to remove.")
     @has_permission("manage_roles")
     async def role_humansremove(self, ctx: commands.Context, role: discord.Role):
-        await ctx.send(embed=Embed("info", "Starting to remove roles, This may take a while."))
+        message = await ctx.reply(embed=Embed("info", "Starting to remove roles, This may take a while."))
         removed = 0
         for member in ctx.guild.members:
             if member.bot == False:
                 await member.remove_roles(role, reason="Role humans remove command")
                 removed += 1
 
-        await ctx.reply(embed=Embed("success", f"Removed the role {role.mention} from {removed} people."))   
+        await message.edit(embed=Embed("success", f"Removed the role {role.mention} from {removed} people."))   
         
     @role.command(name="bots", description="Adds a role to every bot in the server.")
     @app_commands.describe(role="The role to add.")
     @has_permission("manage_roles")
     async def role_bots(self, ctx: commands.Context, role: discord.Role):
-        await ctx.send(embed=Embed("info", "Starting to add roles, This may take a while."))
+        message = await ctx.reply(embed=Embed("info", "Starting to add roles, This may take a while."))
         added = 0
         for member in ctx.guild.members:
             if member.bot == True:
                 await member.add_roles(role, reason="Role bots command")
                 added += 1
 
-        await ctx.reply(embed=Embed("success", f"Added the role {role.mention} to {added} bots."))   
+        await message.edit(embed=Embed("success", f"Added the role {role.mention} to {added} bots."))   
 
     @role.command(name="bots_remove", description="Removes a role from every bot in the server.")
     @app_commands.describe(role="The role to remove.")
     @has_permission("manage_roles")
     async def role_botsremove(self, ctx: commands.Context, role: discord.Role):
-        await ctx.send(embed=Embed("info", "Starting to remove roles, This may take a while."))
+        message = ctx.reply(embed=Embed("info", "Starting to remove roles, This may take a while."))
         removed = 0
         for member in ctx.guild.members:
             if member.bot == True:
                 await member.remove_roles(role, reason="Role bots remove command")
                 removed += 1
 
-        await ctx.reply(embed=Embed("success", f"Removed the role {role.mention} from {removed} bots."))
+        await message.edit(embed=Embed("success", f"Removed the role {role.mention} from {removed} bots."))
         
        
 
