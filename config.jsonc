@@ -1,0 +1,6 @@
+{
+    "bot": {
+        "prefix": "," // This can be overrided by the user
+    }
+    
+}
