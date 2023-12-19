@@ -6,6 +6,7 @@ config = Config()
 client = pymongo.MongoClient(config.mongo_uri)
 database = client['ethereal']
 servers_collection = database['servers']
+users_collection = database['users']
 
 def init_server(server_id: int):
     if not servers_collection.find_one({"server_id": server_id}):
@@ -44,5 +45,28 @@ def get_temp_bans(server_id: int):
     server = servers_collection.find_one({"server_id": server_id})
     if server:
         return server.get("values", {}).get("temp_bans", [])
+    
+    return []
+
+def init_user(user_id: int):
+    if not users_collection.find_one({"user_id": user_id}):
+        new_user = {
+            "user_id": user_id,
+            "values": {
+                "reminders": []  # Initialize an empty list for reminders
+            }
+        }
+        users_collection.insert_one(new_user)
+
+def update_reminders(user_id: int, reminders: list):
+    users_collection.update_one(
+        {"user_id": user_id},
+        {"$set": {"values.reminders": reminders}},
+    )
+
+def get_reminders(user_id: int):
+    user = users_collection.find_one({"user_id": user_id})
+    if user:
+        return user.get("values", {}).get("reminders", [])
     
     return []

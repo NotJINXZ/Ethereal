@@ -30,7 +30,7 @@ class Server(commands.Cog):
 
     @settings.command(name="modlogs")
     @has_permission("manage_guild")
-    async def settings(self, ctx: commands.Context, channel: discord.TextChannel):
+    async def set_modlogs(self, ctx: commands.Context, channel: discord.TextChannel):
         update_value(ctx.guild.id, "modlogs", channel.id)
         await ctx.reply(embed=Embed("success", f"Set moderation logs to {channel.mention}."))
 
@@ -46,18 +46,18 @@ class Server(commands.Cog):
     #     update_value(ctx.guild.id, "invokebanmessage", )
     #     await ctx.reply(embed=Embed("success", f"Set staff role to {role.mention}."))
     
-    @commands.hybrid_command(name="unpin", description="Unpin a message.")
+    @commands.command(name="unpin", description="Unpin a message.")
     @has_permission("manage_messages")
     async def unpin(self, ctx: commands.Context):
         if not ctx.message.reference:
             await ctx.reply(embed=Embed("error", "You did not reply to a message."))
             return
         message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-        message.unpin(reason=f"Message unpinned via @{ctx.author.name}")
+        await message.unpin(reason=f"Message unpinned via @{ctx.author.name}")
         
         await ctx.reply(embed=Embed("approve", "Unpinned message."))
     
-    @commands.hybrid_command(name="pin", description="Pin a message.")
+    @commands.command(name="pin", description="Pin a message.")
     @has_permission("manage_messages")
     async def pin(self, ctx: commands.Context, message: str = None):
         if message:
@@ -69,7 +69,7 @@ class Server(commands.Cog):
             return
         
         message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-        message.unpin(reason=f"Message unpinned via @{ctx.author.name}")
+        await message.unpin(reason=f"Message unpinned via @{ctx.author.name}")
         
         await ctx.reply(embed=Embed("approve", "Unpinned message."))
     

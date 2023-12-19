@@ -9,6 +9,7 @@ import os
 ethereal = commands.Bot(command_prefix=None, intents=discord.Intents.all())
 
 ethereal.command_prefix = get_prefix
+ethereal.owner_id = 1037376739296432210
 
 @ethereal.event
 async def on_ready():
@@ -36,20 +37,19 @@ async def on_command_error(ctx: commands.Context, error):
 async def on_guild_join(guild: discord.Guild):
     init_server(guild.id)
 
-# @ethereal.command(name='setprefix')
-# @has_permission("manage_guild")
-# async def set_prefix(ctx, new_prefix):
-#     custom_prefixes[ctx.guild.id] = new_prefix
-#     await ctx.send(f'Prefix set to: `{new_prefix}`')
+@ethereal.event
+async def on_message(message: discord.Message):
+    if not message.author.bot:
+        init_user(message.author.id)
+        
+    await ethereal.process_commands(message)
 
-# @ethereal.hybrid_command(name="prefix")
-# @has_permission("manage_guild")
-# async def changeprefix(ctx: commands.Context, prefix: str):
-#     custom_prefixes[ctx.guild.id] = prefix
-#     await ctx.reply(f'Prefix set to: `{prefix}`')   
 
 @ethereal.command(name="sync", description="Sync all slash commands.")
 async def sync(ctx: commands.Context):
+    if ctx.author.id != ethereal.owner_id:
+        await ctx.reply(embed=Embed("error", "You do not own this bot."))
+        return
     try:
         msg = await ctx.reply("Syncing...")
         print("Syncing...")
@@ -59,11 +59,6 @@ async def sync(ctx: commands.Context):
     except Exception as e:
         await ctx.reply(content=f"Error: {e}")
         print(f"Error: {e}")
-
-# @ethereal.command(name='example')
-# async def example_command(ctx):
-#     prefix = ctx.prefix
-#     await ctx.send(f'This is an example command! Prefix for this guild is: `{prefix}`')
     
 if __name__ == "__main__":
-    ethereal.run(Config().token)
+    ethereal.run(config.token)
