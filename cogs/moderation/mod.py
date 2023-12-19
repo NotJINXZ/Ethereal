@@ -33,9 +33,21 @@ class Moderation(commands.Cog):
         if reason is not None: x = f" for: `{reason}`." 
         else: x = "."
         await member.send(embed=Embed("info", f"You were banned from {ctx.guild.name}{x}"))
-        await member.ban(delete_message_days=None, delete_message_seconds=120, reason=reason)
+        await member.ban(reason=reason)
 
         await ctx.reply(embed=Embed("success", f"Banned {member.mention}{x}"))
+
+    @commands.hybrid_command(name="unban", description="Unban a user from the guild.")
+    @has_permission("ban_members")
+    @app_commands.describe(user="The user to unban.", reason="The reason for the unban.")
+    async def unban(self, ctx: commands.Context, user: discord.User, reason: str = None):
+        if reason is not None: x = f" for: `{reason}`." 
+        else: x = "."
+        try:await user.send(embed=Embed("info", f"You were banned from {ctx.guild.name}{x}"))
+        except:pass
+        await ctx.guild.unban(user, reason=reason)
+
+        await ctx.reply(embed=Embed("success", f"Unbanned {user.mention}{x}"))
 
     @commands.hybrid_command(name="kick", description="Kick a user from the guild.")
     @has_permission("kick_members")
@@ -47,16 +59,27 @@ class Moderation(commands.Cog):
         await member.kick(reason=reason)
         await ctx.reply(embed=Embed("success", f"Kicked {member.mention}{x}"))
         
-    # @commands.hybrid_command(name="mute", description="Mute a user for a specified amount of time..")
-    # @has_permission("moderate_members")
-    # @app_commands.describe(member="The member to mute.", time="The amount of time", reason="The reason for the kick.")
-    # async def mute(self, ctx: commands.Context, member: discord.Member, time: str, reason: str = None):
-    #     if reason is not None: x = f" for: `{reason}`." 
-    #     else: x = "."
+    @commands.hybrid_command(name="mute", description="Mute a user for a specified amount of time.")
+    @has_permission("moderate_members")
+    @app_commands.describe(member="The member to mute.", time="The amount of time", reason="The reason for the mute.")
+    async def mute(self, ctx: commands.Context, member: discord.Member, time: str, reason: str = None):
+        if reason is not None: x = f" for: `{reason}`." 
+        else: x = "."
         
-    #     #await member.send(embed=Embed("info", f"You were muted in {ctx.guild.name}{x}"))
-    #     await member.timeout(until=datetime.now() + timedelta(seconds=convert_time(time)), reason=reason)
-    #     await ctx.reply(embed=Embed("success", f"Muted {member.mention}{x}"))
+        #await member.send(embed=Embed("info", f"You were muted in {ctx.guild.name}{x}"))
+        await member.timeout(discord.utils.utcnow() + timedelta(seconds=convert_time(time)), reason=reason)
+        await ctx.reply(embed=Embed("success", f"Muted {member.mention}{x}"))
+        
+    @commands.hybrid_command(name="unmute", description="Unmute a user.")
+    @has_permission("moderate_members")
+    @app_commands.describe(member="The member to unmute.", reason="The reason for the unmute.")
+    async def unmute(self, ctx: commands.Context, member: discord.Member, reason: str = None):
+        if reason is not None: x = f" for: `{reason}`." 
+        else: x = "."
+        
+        #await member.send(embed=Embed("info", f"You were muted in {ctx.guild.name}{x}"))
+        await member.edit(timed_out_until=None, reason=reason)
+        await ctx.reply(embed=Embed("success", f"Unmuted {member.mention}{x}"))
     
     @commands.hybrid_command(name="cleanup", description="Delete messages sent by bots.")
     @app_commands.describe(num="The amount of messages to delete.")
@@ -67,7 +90,7 @@ class Moderation(commands.Cog):
 
         deleted_messages = await ctx.channel.purge(limit=num + 1, check=is_bot)
 
-        await ctx.reply(embed=Embed("success", f"Deleted {len(deleted_messages)} messages."))
+        await ctx.reply(embed=Embed("success", f"Deleted {len(deleted_messages)} message(s)."))
         
     @commands.hybrid_group(name="thread")
     async def thread(self, ctx: commands.Context):
@@ -182,8 +205,9 @@ class Moderation(commands.Cog):
                 await member.remove_roles(role, reason="Role bots remove command")
                 removed += 1
 
-        await ctx.reply(embed=Embed("success", f"Removed the role {role.mention} from {removed} bots."))   
-   #  @role.command(name="")
+        await ctx.reply(embed=Embed("success", f"Removed the role {role.mention} from {removed} bots."))
+        
+       
 
     # def cog_unload(self):
     #     if self.reminder_thread:

@@ -32,6 +32,14 @@ async def on_ready():
 async def on_command_error(ctx: commands.Context, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.reply(embed=Embed("error", error))
+        return
+    elif isinstance(error, commands.CommandError):
+        if "Missing Permissions" in str(error):
+            await ctx.reply(embed=Embed("error", "I am missing permissions."))
+            return
+
+    
+    await ctx.reply(embed=Embed("error", error))
 
 @ethereal.event
 async def on_guild_join(guild: discord.Guild):
