@@ -5,6 +5,7 @@ from database import *
 import re
 import asyncio
 import threading
+from datetime import timedelta
 from config import Config
 config = Config()
 
@@ -57,7 +58,7 @@ def convert_time(time_str):
     match = time_regex.match(time_str)
 
     if match:
-        weeks, days, hours, minutes, seconds = map(int, match.groups())
+        weeks, days, hours, minutes, seconds = map(lambda x: int(x) if x else 0, match.groups())
         total_seconds = weeks * 604800 + days * 86400 + hours * 3600 + minutes * 60 + seconds
         return total_seconds
     return None
