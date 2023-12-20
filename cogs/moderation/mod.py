@@ -213,7 +213,145 @@ class Moderation(commands.Cog):
 
         await message.edit(embed=Embed("success", f"Removed the role {role.mention} from {removed} bots."))
         
-       
+    @commands.hybrid_group(name="purge", description="Deletes the specified amount of messages from the current channel")
+    @app_commands.describe(num="The amount of messages to delete", member="The member to delete messages from.")
+    @has_permission("manage_messages")
+    async def purge(self, ctx: commands.Context, num: int, member: discord.Member = None):
+        if num <= 0:
+            await ctx.reply(embed=Embed("error", "Please provide a valid number of messages to purge."))
+            return
+        limit = min(num + 1, 100)
+
+        def is_target_message(message: discord.Message):
+            return (member is None or message.author == member) and not message.pinned
+        if member:x=f" from {member.mention}."
+        else:x="."
+        message = await ctx.reply(embed=Embed("info", f"Deleting {limit} messages{x}"))
+        deleted = await ctx.channel.purge(limit=limit, check=is_target_message)
+
+        await message.edit(embed=Embed("success", f"Deleted {len(deleted)} messages.")) 
+
+    @purge.command(name="embeds", description="Deletes messages containing embeds from the current channel")
+    @app_commands.describe(num="The amount of messages to delete")
+    @has_permission("manage_messages")
+    async def purge_embeds(self, ctx: commands.Context, num: int):
+        await self.purge_messages(ctx, num, lambda msg: len(msg.embeds) > 0)
+
+    @purge.command(name="files", description="Deletes messages containing files/attachments from the current channel")
+    @app_commands.describe(num="The amount of messages to delete")
+    @has_permission("manage_messages")
+    async def purge_files(self, ctx: commands.Context, num: int):
+        await self.purge_messages(ctx, num, lambda msg: msg.attachments or msg.content.startswith("http"))
+
+    @purge.command(name="images", description="Deletes messages containing images (including links) from the current channel")
+    @app_commands.describe(num="The amount of messages to delete")
+    @has_permission("manage_messages")
+    async def purge_images(self, ctx: commands.Context, num: int):
+        await self.purge_messages(ctx, num, lambda msg: any(attachment.url.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".webp")) for attachment in msg.attachments))
+
+    # @purge.command(name="contains", description="Deletes messages containing the specified substring from the current channel")
+    # @app_commands.describe(num="The amount of messages to delete")
+    # @has_permission("manage_messages")
+    # async def purge_contains(self, ctx: commands.Context, num: int):
+    #     await self.purge_messages(ctx, num, lambda msg: True) 
+
+    @purge.command(name="bots", description="Deletes messages from bots in the current channel")
+    @app_commands.describe(num="The amount of messages to delete")
+    @has_permission("manage_messages")
+    async def purge_bots(self, ctx: commands.Context, num: int):
+        await self.purge_messages(ctx, num, lambda msg: msg.author.bot)
+
+    @purge.command(name="before", description="Deletes messages before the specified message ID from the current channel")
+    @app_commands.describe(num="The amount of messages to delete", messagelink="Message ID to delete messages before")
+    @has_permission("manage_messages")
+    async def purge_before(self, ctx: commands.Context, num: int, messagelink: str):
+        await self.purge_before_after(ctx, num, lambda msg: msg.id < int(messagelink))
+
+    @purge.command(name="webhooks", description="Deletes messages from webhooks in the current channel")
+    @app_commands.describe(num="The amount of messages to delete")
+    @has_permission("manage_messages")
+    async def purge_webhooks(self, ctx: commands.Context, num: int):
+        await self.purge_messages(ctx, num, lambda msg: msg.webhook_id is not None)
+
+    @purge.command(name="after", description="Deletes messages after the specified message ID from the current channel")
+    @app_commands.describe(num="The amount of messages to delete", messagelink="Message ID to delete messages after")
+    @has_permission("manage_messages")
+    async def purge_after(self, ctx: commands.Context, num: int, messagelink: str):
+        await self.purge_before_after(ctx, num, lambda msg: msg.id > int(messagelink))
+
+    @purge.command(name="startswith", description="Deletes messages that start with the specified substring from the current channel")
+    @app_commands.describe(num="The amount of messages to delete", substring="Substring to check if messages start with")
+    @has_permission("manage_messages")
+    async def purge_startswith(self, ctx: commands.Context, num: int, substring: str):
+        await self.purge_messages(ctx, num, lambda msg: msg.content.lower().startswith(substring.lower()))
+
+    @purge.command(name="links", description="Deletes messages containing links from the current channel")
+    @app_commands.describe(num="The amount of messages to delete")
+    @has_permission("manage_messages")
+    async def purge_links(self, ctx: commands.Context, num: int):
+        await self.purge_messages(ctx, num, lambda msg: any(url in msg.content.lower() for url in ["http", "https"]))
+
+    @purge.command(name="between", description="Deletes messages between two specified message IDs from the current channel")
+    @app_commands.describe(num="The amount of messages to delete", startid="Start message ID", finishid="Finish message ID")
+    @has_permission("manage_messages")
+    async def purge_between(self, ctx: commands.Context, num: int, startid: int, finishid: int):
+        await self.purge_messages(ctx, num, lambda msg: startid < msg.id < finishid)
+
+    @purge.command(name="humans", description="Deletes messages from humans in the current channel")
+    @app_commands.describe(num="The amount of messages to delete")
+    @has_permission("manage_messages")
+    async def purge_humans(self, ctx: commands.Context, num: int):
+        await self.purge_messages(ctx, num, lambda msg: not msg.author.bot)
+
+    @purge.command(name="reactions", description="Deletes messages with reactions from the current channel")
+    @app_commands.describe(num="The amount of messages to delete")
+    @has_permission("manage_messages")
+    async def purge_reactions(self, ctx: commands.Context, num: int):
+        await self.purge_messages(ctx, num, lambda msg: len(msg.reactions) > 0)
+
+    @purge.command(name="endswith", description="Deletes messages that end with the specified substring from the current channel")
+    @app_commands.describe(num="The amount of messages to delete", substring="Substring to check if messages end with")
+    @has_permission("manage_messages")
+    async def purge_endswith(self, ctx: commands.Context, num: int, substring: str):
+        await self.purge_messages(ctx, num, lambda msg: msg.content.lower().endswith(substring.lower()))
+
+    @purge.command(name="emoji", description="Deletes messages containing emojis from the current channel")
+    @app_commands.describe(num="The amount of messages to delete")
+    @has_permission("manage_messages")
+    async def purge_emoji(self, ctx: commands.Context, num: int):
+        await self.purge_messages(ctx, num, lambda msg: any(char.isemoji() for char in msg.content))
+
+    @purge.command(name="mentions", description="Deletes messages with mentions for a specific member from the current channel")
+    @app_commands.describe(num="The amount of messages to delete", member="Member to filter messages for")
+    @has_permission("manage_messages")
+    async def purge_mentions(self, ctx: commands.Context, num: int, member: discord.Member):
+        await self.purge_messages(ctx, num, lambda msg: member.mention in msg.content)
+
+    @purge.command(name="upto", description="Deletes messages up to the specified message ID from the current channel")
+    @app_commands.describe(num="The amount of messages to delete", messagelink="Message ID to delete messages up to")
+    @has_permission("manage_messages")
+    async def purge_upto(self, ctx: commands.Context, num: int, messagelink: str):
+        await self.purge_before_after(ctx, num, lambda msg: msg.id <= int(messagelink))
+
+    async def purge_messages(self, ctx: commands.Context, num: int, check):
+        def is_target_message(message: discord.Message):
+            return check(message) and not message.pinned
+
+        await ctx.reply(f"Deleting {num} messages...")
+
+        deleted = await ctx.channel.purge(limit=num, check=is_target_message)
+
+        await ctx.send(embed=Embed("success", f"Deleted {len(deleted)} messages."))
+
+    async def purge_before_after(self, ctx: commands.Context, num: int, check):
+        def is_target_message(message: discord.Message):
+            return check(message) and not message.pinned
+
+        await ctx.reply(f"Deleting {num} messages...")
+
+        deleted = await ctx.channel.purge(limit=num, before=ctx.message, check=is_target_message)
+
+        await ctx.send(embed=Embed("success", f"Deleted {len(deleted)} messages."))
 
     # def cog_unload(self):
     #     if self.reminder_thread:
