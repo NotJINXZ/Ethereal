@@ -37,7 +37,7 @@ def has_permission(permission_names):
 
     return commands.check(predicate)
 
-def Embed(type: str, description: str):
+def Embed(type: str, description: str, **kwargs):
     valid_types = ["info", "warn", "error", "success"]
 
     if type.lower() not in valid_types:
@@ -49,9 +49,12 @@ def Embed(type: str, description: str):
         "error": {"emoji": "<:deny:1186447716608376868> ", "color": discord.Color.red()},
         "success": {"emoji": "<:approve:1186447714175701043> ", "color": discord.Color.green()}
     }
+
+    data[type].update(kwargs)
     
     embed = discord.Embed(description=f"{data[type]['emoji']}{description}", color=data[type]['color'])
     return embed
+
 
 def convert_time(time_str):
     time_regex = re.compile(r'(?:(\d+)w)?(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?')
