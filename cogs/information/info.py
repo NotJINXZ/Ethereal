@@ -22,7 +22,7 @@ class Information(commands.GroupCog):
         
         await ctx.reply(embed=Embed("success", f"Here's the emoji: {emoji}"), file=discord.File(img_bytes, filename=f"{(emoji.name).format(' ', '')}.png"))
 
-    @emoji.command(name="remove", description="Removes emote from server.")
+    @emoji.command(name="remove", description="Removes emote from server.", aliases=["delete"])
     @app_commands.describe(emoji="The emoji to remove.")
     @has_permission("manage_expressions")
     async def emoji_remove(self, ctx: commands.Context, emoji: discord.Emoji):
