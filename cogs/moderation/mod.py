@@ -357,10 +357,66 @@ class Moderation(commands.Cog):
     @has_permission("administrator")
     async def clone(self, ctx: commands.Context, channel: Union[discord.TextChannel, discord.ForumChannel, discord.StageChannel, discord.VoiceChannel]):
         new_channel = await channel.clone()
-        await new_channel.move(category=channel.category)
+        if channel.category != new_channel.category:
+            await new_channel.move(category=channel.category)
         await channel.delete(reason="Cloned channel")
-          
+        await new_channel.send(embed=Embed("success", "Successfully nuked channel."))
+    
+    @commands.hybrid_command(name="newusers", description="View list of recently joined members.")
+    @app_commands.describe(count="The amount of users to view.")
+    async def newusers(self, ctx: commands.Context, count: int = 10):
+        sorted_members = sorted(ctx.guild.members, key=lambda member: member.joined_at)
+ 
+        await ctx.reply(embeds=[Embed("info", "Recently joined members:"), discord.Embed(color=discord.Color.blurple(), description=f"" + ''.join([f'{member.name}#{member.discriminator}\n' for member in sorted_members[-count:]]))])
 
+
+    @commands.command(name="slowmode", description="Restricts members to sending one message per interval.")
+    @app_commands.describe(interval="The slowmode in seconds. (If blank, slowmode removed.)", channel="The channel to edit.")
+    @has_permission("manage_channels")
+    async def slowmode(self, ctx: commands.Context, interval: int = None, channel: discord.TextChannel = None):
+        channel = channel or ctx.channel
+        
+        await channel.edit(slowmode_delay=interval)
+        
+        message_content = f"Set the slowmode to {interval}s{' in ' + channel.mention if channel != ctx.channel else ''}."
+        await ctx.reply(embed=Embed("success", message_content))
+
+    @commands.command(name="rename", description="Assigns the mentioned user a new nickname in the guild.")
+    @app_commands.describe(member="The member to edit.", nickname="The nickname to set.")
+    @has_permission("manage_nicknames")
+    async def rename(self, ctx: commands.Context, member: discord.Member, nickname: str = None):
+        await member.edit(nick=nickname)
+        await ctx.reply(embed=Embed("success", f"Set {member.mention}'s nickname."))
+
+    @commands.command(name="topic", description="Change a channel's topic.")
+    @app_commands.describe(channel="The channel to edit.", topic="The topic to set.")
+    @has_permission("manage_channels")
+    async def topic(self, ctx: commands.Context, topic: str = None, channel: discord.TextChannel = None):
+        channel = channel or ctx.channel
+        
+        await channel.edit(topic=topic)
+        
+        message_content = f"Set the topic to {topic}{' in ' + channel.mention if channel != ctx.channel else ''}."
+        await ctx.reply(embed=Embed("success", message_content))
+        
+    @commands.command(name="naughty", description="Temporarily make a channel NSFW for 30 seconds")
+    @app_commands.describe(channel="The channel to make naughty.")
+    @has_permission("manage_channels")
+    async def naughty(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        channel = channel or ctx.channel
+        
+        await channel.edit(nsfw=True)
+        
+        message_content = f"Set the channel to NSFW for 30s{' in ' + channel.mention if channel != ctx.channel else ''}."
+        message = await ctx.reply(embed=Embed("success", message_content))
+        
+        await asyncio.sleep(30)
+        
+        await channel.edit(nsfw=False)
+        
+        message_content = f"Disabled NSFW mode{' in ' + channel.mention if channel != ctx.channel else ''}."
+        await message.reply(embed=Embed("success", message_content)) 
+        
     # def cog_unload(self):
     #     if self.reminder_thread:
     #         self.reminder_thread.cancel()
