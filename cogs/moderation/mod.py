@@ -42,8 +42,13 @@ class Moderation(commands.Cog):
     async def unban(self, ctx: commands.Context, user: discord.User, reason: str = None):
         if reason is not None: x = f" for: `{reason}`." 
         else: x = "."
-        try:await user.send(embed=Embed("info", f"You were banned from {ctx.guild.name}{x}"))
+        try:await user.send(embed=Embed("info", f"You were unbanned from {ctx.guild.name}{x}"))
         except:pass
+        
+        if user not in ctx.guild.bans():
+            await ctx.reply(embed=Embed("error", f"User {user.mention} is not banned."))
+            return
+        
         await ctx.guild.unban(user, reason=reason)
 
         await ctx.reply(embed=Embed("success", f"Unbanned {user.mention}{x}"))
