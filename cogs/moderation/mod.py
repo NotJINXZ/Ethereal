@@ -1,6 +1,5 @@
 from universal import *
-from datetime import datetime
-
+from typing import Union
 
 class Moderation(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -352,6 +351,15 @@ class Moderation(commands.Cog):
         deleted = await ctx.channel.purge(limit=num, before=ctx.message, check=is_target_message)
 
         await ctx.send(embed=Embed("success", f"Deleted {len(deleted)} messages."))
+
+    @commands.hybrid_command("nuke", description="Clone the current channel")
+    @app_commands.describe(channel="The channel to clone.")
+    @has_permission("administrator")
+    async def clone(self, ctx: commands.Context, channel: Union[discord.TextChannel, discord.ForumChannel, discord.StageChannel, discord.VoiceChannel]):
+        new_channel = await channel.clone()
+        await new_channel.move(category=channel.category)
+        await channel.delete(reason="Cloned channel")
+          
 
     # def cog_unload(self):
     #     if self.reminder_thread:
