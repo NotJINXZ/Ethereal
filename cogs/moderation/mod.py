@@ -45,7 +45,7 @@ class Moderation(commands.Cog):
         try:await user.send(embed=Embed("info", f"You were unbanned from {ctx.guild.name}{x}"))
         except:pass
         
-        if user not in ctx.guild.bans():
+        if user not in [entry async for entry in ctx.guild.bans(limit=5000)]:
             await ctx.reply(embed=Embed("error", f"User {user.mention} is not banned."))
             return
         
