@@ -131,6 +131,9 @@ class Moderation(commands.Cog):
     @app_commands.describe(member="The member to edit.", role="The role to give/remove.")
     @has_permission("manage_roles")
     async def role(self, ctx: commands.Context, member: discord.Member, role: discord.Role):
+        if role > ctx.author.top_role:
+            await ctx.reply(embed=Embed("error", "You do not have permission to use that role."))
+            return
         if role in member.roles:
             await member.remove_roles(role, reason="Role command.")
             await ctx.reply(embed=Embed("success", f"Removed the role {role.mention} from {member.mention}."))
@@ -142,6 +145,9 @@ class Moderation(commands.Cog):
     @app_commands.describe(role="The role to look for", assign_role="The role to give.")
     @has_permission("manage_roles")
     async def role_has(self, ctx: commands.Context, role: discord.Role, assign_role: discord.Role):
+        if role > ctx.author.top_role:
+            await ctx.reply(embed=Embed("error", "You do not have permission to use that role."))
+            return
         message = await ctx.reply(embed=Embed("info", "Starting to add roles, This may take a while."))
         added = 0
         for member in ctx.guild.members:
@@ -155,6 +161,9 @@ class Moderation(commands.Cog):
     @app_commands.describe(role="The role to look for", remove_role="The role to remove.")
     @has_permission("manage_roles")
     async def role_hasremove(self, ctx: commands.Context, role: discord.Role, remove_role: discord.Role):
+        if role > ctx.author.top_role:
+            await ctx.reply(embed=Embed("error", "You do not have permission to use that role."))
+            return
         message = await ctx.reply(embed=Embed("info", "Starting to remove roles, This may take a while."))
         removed = 0
         for member in ctx.guild.members:
@@ -168,6 +177,9 @@ class Moderation(commands.Cog):
     @app_commands.describe(role="The role to add.")
     @has_permission("manage_roles")
     async def role_humans(self, ctx: commands.Context, role: discord.Role):
+        if role > ctx.author.top_role:
+            await ctx.reply(embed=Embed("error", "You do not have permission to use that role."))
+            return
         message = await ctx.reply(embed=Embed("info", "Starting to add roles, This may take a while."))
         added = 0
         for member in ctx.guild.members:
@@ -181,6 +193,9 @@ class Moderation(commands.Cog):
     @app_commands.describe(role="The role to remove.")
     @has_permission("manage_roles")
     async def role_humansremove(self, ctx: commands.Context, role: discord.Role):
+        if role > ctx.author.top_role:
+            await ctx.reply(embed=Embed("error", "You do not have permission to use that role."))
+            return
         message = await ctx.reply(embed=Embed("info", "Starting to remove roles, This may take a while."))
         removed = 0
         for member in ctx.guild.members:
@@ -194,6 +209,9 @@ class Moderation(commands.Cog):
     @app_commands.describe(role="The role to add.")
     @has_permission("manage_roles")
     async def role_bots(self, ctx: commands.Context, role: discord.Role):
+        if role > ctx.author.top_role:
+            await ctx.reply(embed=Embed("error", "You do not have permission to use that role."))
+            return
         message = await ctx.reply(embed=Embed("info", "Starting to add roles, This may take a while."))
         added = 0
         for member in ctx.guild.members:
@@ -207,6 +225,9 @@ class Moderation(commands.Cog):
     @app_commands.describe(role="The role to remove.")
     @has_permission("manage_roles")
     async def role_botsremove(self, ctx: commands.Context, role: discord.Role):
+        if role > ctx.author.top_role:
+            await ctx.reply(embed=Embed("error", "You do not have permission to use that role."))
+            return
         message = ctx.reply(embed=Embed("info", "Starting to remove roles, This may take a while."))
         removed = 0
         for member in ctx.guild.members:
