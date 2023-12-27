@@ -1,9 +1,9 @@
-import pymongo
+from pymongo import MongoClient
 from config import Config
 config = Config()
 
 
-client = pymongo.MongoClient(config.mongo_uri)
+client = MongoClient(config.mongo_uri)
 database = client['ethereal']
 servers_collection = database['servers']
 users_collection = database['users']

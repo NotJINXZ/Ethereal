@@ -1,0 +1,173 @@
+/* index.css */
+
+body {
+    font-family: 'Arial', sans-serif;
+    transition: background-color 0.5s, color 0.5s;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: background-color 0.5s;
+}
+
+h1 {
+    text-align: center;
+    color: #007bff;
+}
+
+/* Dark/Light Mode Switcher Icon */
+.mode-switch {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+}
+
+#modeIcon {
+    width: 30px; /* Adjust the size as needed */
+    height: 30px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#messageBox {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.theme-switch-wrapper {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 24px;
+    margin-left: 10px; /* Add margin to separate from other elements */
+}
+
+.theme-switch input {
+    display: none;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transition: 0.4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: '';
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #007bff;
+}
+
+input:checked + .slider:before {
+    transform: translateX(16px); /* Adjusted the translation */
+}
+
+.em {
+    margin-left: 10px;
+}
+
+.recaptcha-container {
+    margin-top: 15px;
+}
+
+.terms-checkbox {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.terms-checkbox input {
+    margin-right: 10px;
+}
+
+/* Light Mode */
+body {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.container {
+    background-color: #fff;
+}
+
+.button {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+
+#messageBox {
+    border: 1px solid #ddd;
+}
+
+/* Dark Mode */
+body.dark-theme {
+    background-color: #1a1a1a;
+    color: #ffffff;
+}
+
+.container.dark-theme {
+    background-color: #333;
+}
+
+.button.dark-theme {
+    background-color: #555;
+    color: #fff;
+}
+
+#messageBox.dark-theme {
+    border: 1px solid #555;
+}

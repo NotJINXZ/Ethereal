@@ -39,7 +39,7 @@ async def on_command_error(ctx: commands.Context, error):
             return
 
     
-    await ctx.reply(embed=Embed("error", str(error).capitalize()))
+    await ctx.reply(embed=Embed("error", str(error) .capitalize()))
 
 @ethereal.event
 async def on_guild_join(guild: discord.Guild):

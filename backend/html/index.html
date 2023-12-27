@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <title>Ethereal Server Registration</title>
+</head>
+<body>
+    <div class="container">
+        <div class="container">
+            <div class="mode-switch" onclick="toggleDarkMode()">
+                <img id="modeIcon" src="{{ url_for('static', filename='moon.png') }}" alt="Dark Mode Icon">
+            </div>
+    
+            <h1>Ethereal Server Registration</h1>
+        
+            <label for="serverId">Server ID:</label>
+            <input type="text" id="serverId" />
+
+            <button id="submitButton" onclick="submitForm()">Submit</button>
+
+            <div id="messageBox"></div>
+
+            <!-- Google reCAPTCHA integration -->
+            <div class="recaptcha-container" id="recaptcha-container">
+                <div class="g-recaptcha" data-sitekey="6LcUcj0pAAAAAOM3vwINuIROx5vMDcoIoYfysdBs" data-callback="onRecaptchaSubmit"></div>
+            </div>
+
+            <div class="terms-checkbox">
+                <input type="checkbox" id="termsCheckbox" onclick="showTermsModal()">
+                <label for="termsCheckbox">I agree to the terms and conditions</label>                
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    <script src="{{ url_for('static', filename='index.js') }}" defer></script>
+</body>
+</html>

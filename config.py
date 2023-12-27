@@ -14,6 +14,8 @@ class Config:
         self.token = os.getenv("TOKEN")
         self.prefix = conf["bot"]["prefix"]
         self.mongo_uri = os.getenv("MONGO_URI")
+        self.osu = os.getenv("OSU_APIKEY")
+        self.whitelist_access = conf["bot"]["whitelist"]
 
 # if __name__ == "__main__":
 #     config = Config()
