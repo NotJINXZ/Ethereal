@@ -1,5 +1,3 @@
-/* index.css */
-
 body {
     font-family: 'Arial', sans-serif;
     transition: background-color 0.5s, color 0.5s;
@@ -22,7 +20,6 @@ h1 {
     color: #007bff;
 }
 
-/* Dark/Light Mode Switcher Icon */
 .mode-switch {
     position: absolute;
     top: 10px;
@@ -31,7 +28,7 @@ h1 {
 }
 
 #modeIcon {
-    width: 30px; /* Adjust the size as needed */
+    width: 30px;
     height: 30px;
 }
 
@@ -75,7 +72,7 @@ button:hover {
     display: inline-block;
     width: 40px;
     height: 24px;
-    margin-left: 10px; /* Add margin to separate from other elements */
+    margin-left: 10px;
 }
 
 .theme-switch input {
@@ -109,7 +106,7 @@ input:checked + .slider {
 }
 
 input:checked + .slider:before {
-    transform: translateX(16px); /* Adjusted the translation */
+    transform: translateX(16px);
 }
 
 .em {
