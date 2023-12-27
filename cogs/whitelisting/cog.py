@@ -8,30 +8,35 @@ class Whitelisting(commands.GroupCog):
         self.enabled = config.whitelist_enabled # Enable the whitelisting system?
         #self.allowed_servers = []
         self.path = os.path.join(os.getcwd(), "whitelisted.json")
+        self.process_server_lock = asyncio.Lock()
     
     
     async def process_server(self, server: discord.Guild, event_type=None):
-        authorized = self.is_server_authorized(server)
-        
-        if not authorized and self.enabled:
-            async for entry in server.audit_logs(limit=1, action=discord.AuditLogAction.bot_add):
-                if entry.target.id == self.bot.user.id:
-                    added_by = entry.user
+        try:
+            async with self.process_server_lock:
+                authorized = self.is_server_authorized(server)
+                
+                if not authorized and self.enabled:
+                    async for entry in server.audit_logs(limit=1, action=discord.AuditLogAction.bot_add):
+                        if entry.target.id == self.bot.user.id:
+                            added_by = entry.user
 
-                    if event_type == 'join':
-                        embed=Embed("error", "Hey there! Unfortunately, your server has not been authorized to use this bot. Please contact our support system if this is an error. Have a nice day!")
-                    elif event_type == 'message':
-                        embed=Embed("error", "Hey there! It seems that either the whitelisting system has been disabled, or your whitelisted status was revoked, so I left your server. Please contact our support system if this is an error. Have a nice day!")
-                    else:
-                        raise ValueError("Invalid event type.")
+                            if event_type == 'join':
+                                embed = Embed("error", "Hey there! Unfortunately, your server has not been authorized to use this bot. Please contact our support system if this is an error. Have a nice day!")
+                            elif event_type == 'message':
+                                embed = Embed("error", "Hey there! It seems that either the whitelisting system has been disabled, or your whitelisted status was revoked, so I left your server. Please contact our support system if this is an error. Have a nice day!")
+                            else:
+                                raise ValueError("Invalid event type.")
 
-                    embeds = [embed]
-                    if config.whitelist_dashboard:
-                        embed1 = discord.Embed(title="Whitelist your server!", description=f"To whitelist your server, visit [{urlparse(config.whitelist_dashboard_link).netloc}]({config.whitelist_dashboard_link + '?id={}'.format(server.id)})", color=discord.Color.blurple())
-                        embeds.append(embed1)
+                            embeds = [embed]
+                            if config.whitelist_dashboard:
+                                embed1 = discord.Embed(title="Whitelist your server!", description=f"To whitelist your server, visit [{urlparse(config.whitelist_dashboard_link).netloc}]({config.whitelist_dashboard_link + '?id={}'.format(server.id)})", color=discord.Color.blurple())
+                                embeds.append(embed1)
 
-                    await added_by.send(embeds=embeds)
-                    await server.leave()
+                            await added_by.send(embeds=embeds)
+                            await server.leave()
+        except:
+            pass # Ignore errors
 
     def is_server_authorized(self, server):
         with open(self.path, "r") as file:
@@ -108,6 +113,6 @@ class Whitelisting(commands.GroupCog):
             
             await ctx.reply(embed=Embed("success", f"Successfully removed guild {guild.name} from the whitelist."))
             return
-        
+
 async def setup(bot):
     await bot.add_cog(Whitelisting(bot))
