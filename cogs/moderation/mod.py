@@ -27,6 +27,7 @@ class Moderation(commands.Cog):
         
     @commands.hybrid_command(name="ban", description="Ban a user from the guild.")
     @has_permission("ban_members")
+    @commands.guild_only()
     @app_commands.describe(member="The member to ban.", reason="The reason for the ban.")
     async def ban(self, ctx: commands.Context, member: discord.Member, reason: str = None):
         if reason is not None: x = f" for: `{reason}`." 
@@ -38,6 +39,7 @@ class Moderation(commands.Cog):
 
     @commands.hybrid_command(name="unban", description="Unban a user from the guild.")
     @has_permission("ban_members")
+    @commands.guild_only()
     @app_commands.describe(user="The user to unban.", reason="The reason for the unban.")
     async def unban(self, ctx: commands.Context, user: discord.User, reason: str = None):
         if user not in [entry async for entry in ctx.guild.bans(limit=5000)]:
@@ -54,6 +56,7 @@ class Moderation(commands.Cog):
 
     @commands.hybrid_command(name="kick", description="Kick a user from the guild.")
     @has_permission("kick_members")
+    @commands.guild_only()
     @app_commands.describe(member="The member to kick.", reason="The reason for the kick.")
     async def kick(self, ctx: commands.Context, member: discord.Member, reason: str = None):
         if reason is not None: x = f" for: `{reason}`." 
@@ -64,6 +67,7 @@ class Moderation(commands.Cog):
         
     @commands.hybrid_command(name="mute", description="Mute a user for a specified amount of time.", aliases=["timeout"])
     @has_permission("moderate_members")
+    @commands.guild_only()
     @app_commands.describe(member="The member to mute.", time="The amount of time", reason="The reason for the mute.")
     async def mute(self, ctx: commands.Context, member: discord.Member, time: str, reason: str = None):
         if reason is not None: x = f" for: `{reason}`." 
@@ -75,6 +79,7 @@ class Moderation(commands.Cog):
         
     @commands.hybrid_command(name="unmute", description="Unmute a user.")
     @has_permission("moderate_members")
+    @commands.guild_only()
     @app_commands.describe(member="The member to unmute.", reason="The reason for the unmute.")
     async def unmute(self, ctx: commands.Context, member: discord.Member, reason: str = None):
         if reason is not None: x = f" for: `{reason}`." 
@@ -86,6 +91,7 @@ class Moderation(commands.Cog):
     
     @commands.hybrid_command(name="cleanup", description="Delete messages sent by bots.")
     @app_commands.describe(num="The amount of messages to delete.")
+    @commands.guild_only()
     @has_permission("manage_messages")       
     async def cleanup(self, ctx: commands.Context, num: int):
         def is_bot(message):
@@ -96,11 +102,13 @@ class Moderation(commands.Cog):
         await ctx.reply(embed=Embed("success", f"Deleted {len(deleted_messages)} message(s)."))
         
     @commands.hybrid_group(name="thread")
+    @commands.guild_only()
     async def thread(self, ctx: commands.Context):
         return
     
     @thread.command(name="lock")
     @app_commands.describe(thread="The thread to lock.", reason="The reason for the lock.")
+    @commands.guild_only()
     @has_permission("manage_threads")
     async def thread_lock(self, ctx: commands.Context, thread: discord.Thread, reason: str = None):
         await thread.edit(locked=True, reason=reason)
@@ -108,12 +116,14 @@ class Moderation(commands.Cog):
 
     @thread.command(name="unlock")
     @app_commands.describe(thread="The thread to unlock.", reason="The reason for the unlock.")
+    @commands.guild_only()
     @has_permission("manage_threads")
     async def thread_unlock(self, ctx: commands.Context, thread: discord.Thread, reason: str = None):
         await thread.edit(locked=False, reason=reason)
         await ctx.reply(embed=Embed("success", f"Unlocked thread {thread.mention}.")) 
         
     @commands.hybrid_command(name="moveall", description="Move all members in current channel to another channel.")
+    @commands.guild_only()
     @has_permission("administrator")
     async def moveall(self, ctx: commands.Context, old_channel: discord.VoiceChannel, new_channel: discord.VoiceChannel):
         if len(old_channel.members) > 10:
@@ -129,6 +139,7 @@ class Moderation(commands.Cog):
         
     @commands.hybrid_group(name="role", fallback="modify", description="Modify a member's roles")
     @app_commands.describe(member="The member to edit.", role="The role to give/remove.")
+    @commands.guild_only()
     @has_permission("manage_roles")
     async def role(self, ctx: commands.Context, member: discord.Member, role: discord.Role):
         if role > ctx.author.top_role:
@@ -143,6 +154,7 @@ class Moderation(commands.Cog):
             
     @role.command(name="has", description="Add a role to members with a specific role.")
     @app_commands.describe(role="The role to look for", assign_role="The role to give.")
+    @commands.guild_only()
     @has_permission("manage_roles")
     async def role_has(self, ctx: commands.Context, role: discord.Role, assign_role: discord.Role):
         if role > ctx.author.top_role:
@@ -159,6 +171,7 @@ class Moderation(commands.Cog):
         
     @role.command(name="has_remove", description="Removes a role from members with a specific role.")
     @app_commands.describe(role="The role to look for", remove_role="The role to remove.")
+    @commands.guild_only()
     @has_permission("manage_roles")
     async def role_hasremove(self, ctx: commands.Context, role: discord.Role, remove_role: discord.Role):
         if role > ctx.author.top_role:
@@ -175,6 +188,7 @@ class Moderation(commands.Cog):
         
     @role.command(name="humans", description="Adds a role to every human in the server.")
     @app_commands.describe(role="The role to add.")
+    @commands.guild_only()
     @has_permission("manage_roles")
     async def role_humans(self, ctx: commands.Context, role: discord.Role):
         if role > ctx.author.top_role:
@@ -191,6 +205,7 @@ class Moderation(commands.Cog):
 
     @role.command(name="humans_remove", description="Removes a role from every human in the server.")
     @app_commands.describe(role="The role to remove.")
+    @commands.guild_only()
     @has_permission("manage_roles")
     async def role_humansremove(self, ctx: commands.Context, role: discord.Role):
         if role > ctx.author.top_role:
@@ -207,6 +222,7 @@ class Moderation(commands.Cog):
         
     @role.command(name="bots", description="Adds a role to every bot in the server.")
     @app_commands.describe(role="The role to add.")
+    @commands.guild_only()
     @has_permission("manage_roles")
     async def role_bots(self, ctx: commands.Context, role: discord.Role):
         if role > ctx.author.top_role:
@@ -223,6 +239,7 @@ class Moderation(commands.Cog):
 
     @role.command(name="bots_remove", description="Removes a role from every bot in the server.")
     @app_commands.describe(role="The role to remove.")
+    @commands.guild_only()
     @has_permission("manage_roles")
     async def role_botsremove(self, ctx: commands.Context, role: discord.Role):
         if role > ctx.author.top_role:
@@ -239,6 +256,7 @@ class Moderation(commands.Cog):
         
     @commands.hybrid_group(name="purge", description="Deletes the specified amount of messages from the current channel")
     @app_commands.describe(num="The amount of messages to delete", member="The member to delete messages from.")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge(self, ctx: commands.Context, num: int, member: discord.Member = None):
         if num <= 0:
@@ -257,18 +275,21 @@ class Moderation(commands.Cog):
 
     @purge.command(name="embeds", description="Deletes messages containing embeds from the current channel")
     @app_commands.describe(num="The amount of messages to delete")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_embeds(self, ctx: commands.Context, num: int):
         await self.purge_messages(ctx, num, lambda msg: len(msg.embeds) > 0)
 
     @purge.command(name="files", description="Deletes messages containing files/attachments from the current channel")
     @app_commands.describe(num="The amount of messages to delete")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_files(self, ctx: commands.Context, num: int):
         await self.purge_messages(ctx, num, lambda msg: msg.attachments or msg.content.startswith("http"))
 
     @purge.command(name="images", description="Deletes messages containing images (including links) from the current channel")
     @app_commands.describe(num="The amount of messages to delete")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_images(self, ctx: commands.Context, num: int):
         await self.purge_messages(ctx, num, lambda msg: any(attachment.url.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".webp")) for attachment in msg.attachments))
@@ -281,78 +302,91 @@ class Moderation(commands.Cog):
 
     @purge.command(name="bots", description="Deletes messages from bots in the current channel")
     @app_commands.describe(num="The amount of messages to delete")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_bots(self, ctx: commands.Context, num: int):
         await self.purge_messages(ctx, num, lambda msg: msg.author.bot)
 
     @purge.command(name="before", description="Deletes messages before the specified message ID from the current channel")
     @app_commands.describe(num="The amount of messages to delete", messagelink="Message ID to delete messages before")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_before(self, ctx: commands.Context, num: int, messagelink: str):
         await self.purge_before_after(ctx, num, lambda msg: msg.id < int(messagelink))
 
     @purge.command(name="webhooks", description="Deletes messages from webhooks in the current channel")
     @app_commands.describe(num="The amount of messages to delete")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_webhooks(self, ctx: commands.Context, num: int):
         await self.purge_messages(ctx, num, lambda msg: msg.webhook_id is not None)
 
     @purge.command(name="after", description="Deletes messages after the specified message ID from the current channel")
     @app_commands.describe(num="The amount of messages to delete", messagelink="Message ID to delete messages after")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_after(self, ctx: commands.Context, num: int, messagelink: str):
         await self.purge_before_after(ctx, num, lambda msg: msg.id > int(messagelink))
 
     @purge.command(name="startswith", description="Deletes messages that start with the specified substring from the current channel")
     @app_commands.describe(num="The amount of messages to delete", substring="Substring to check if messages start with")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_startswith(self, ctx: commands.Context, num: int, substring: str):
         await self.purge_messages(ctx, num, lambda msg: msg.content.lower().startswith(substring.lower()))
 
     @purge.command(name="links", description="Deletes messages containing links from the current channel")
     @app_commands.describe(num="The amount of messages to delete")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_links(self, ctx: commands.Context, num: int):
         await self.purge_messages(ctx, num, lambda msg: any(url in msg.content.lower() for url in ["http", "https"]))
 
     @purge.command(name="between", description="Deletes messages between two specified message IDs from the current channel")
     @app_commands.describe(num="The amount of messages to delete", startid="Start message ID", finishid="Finish message ID")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_between(self, ctx: commands.Context, num: int, startid: int, finishid: int):
         await self.purge_messages(ctx, num, lambda msg: startid < msg.id < finishid)
 
     @purge.command(name="humans", description="Deletes messages from humans in the current channel")
     @app_commands.describe(num="The amount of messages to delete")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_humans(self, ctx: commands.Context, num: int):
         await self.purge_messages(ctx, num, lambda msg: not msg.author.bot)
 
     @purge.command(name="reactions", description="Deletes messages with reactions from the current channel")
     @app_commands.describe(num="The amount of messages to delete")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_reactions(self, ctx: commands.Context, num: int):
         await self.purge_messages(ctx, num, lambda msg: len(msg.reactions) > 0)
 
     @purge.command(name="endswith", description="Deletes messages that end with the specified substring from the current channel")
     @app_commands.describe(num="The amount of messages to delete", substring="Substring to check if messages end with")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_endswith(self, ctx: commands.Context, num: int, substring: str):
         await self.purge_messages(ctx, num, lambda msg: msg.content.lower().endswith(substring.lower()))
 
     @purge.command(name="emoji", description="Deletes messages containing emojis from the current channel")
     @app_commands.describe(num="The amount of messages to delete")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_emoji(self, ctx: commands.Context, num: int):
         await self.purge_messages(ctx, num, lambda msg: any(char.isemoji() for char in msg.content))
 
     @purge.command(name="mentions", description="Deletes messages with mentions for a specific member from the current channel")
     @app_commands.describe(num="The amount of messages to delete", member="Member to filter messages for")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_mentions(self, ctx: commands.Context, num: int, member: discord.Member):
         await self.purge_messages(ctx, num, lambda msg: member.mention in msg.content)
 
     @purge.command(name="upto", description="Deletes messages up to the specified message ID from the current channel")
     @app_commands.describe(num="The amount of messages to delete", messagelink="Message ID to delete messages up to")
+    @commands.guild_only()
     @has_permission("manage_messages")
     async def purge_upto(self, ctx: commands.Context, num: int, messagelink: str):
         await self.purge_before_after(ctx, num, lambda msg: msg.id <= int(messagelink))
@@ -379,6 +413,7 @@ class Moderation(commands.Cog):
 
     @commands.hybrid_command("nuke", description="Clone the current channel")
     @app_commands.describe(channel="The channel to clone.")
+    @commands.guild_only()
     @has_permission("administrator")
     async def clone(self, ctx: commands.Context, channel: Union[discord.TextChannel, discord.ForumChannel, discord.StageChannel, discord.VoiceChannel]):
         new_channel = await channel.clone()
@@ -389,6 +424,7 @@ class Moderation(commands.Cog):
     
     @commands.hybrid_command(name="newusers", description="View list of recently joined members.")
     @app_commands.describe(count="The amount of users to view.")
+    @commands.guild_only()
     async def newusers(self, ctx: commands.Context, count: int = 10):
         sorted_members = sorted(ctx.guild.members, key=lambda member: member.joined_at)
  
@@ -397,6 +433,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="slowmode", description="Restricts members to sending one message per interval.")
     @app_commands.describe(interval="The slowmode in seconds. (If blank, slowmode removed.)", channel="The channel to edit.")
+    @commands.guild_only()
     @has_permission("manage_channels")
     async def slowmode(self, ctx: commands.Context, interval: int = None, channel: discord.TextChannel = None):
         channel = channel or ctx.channel
@@ -408,6 +445,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="rename", description="Assigns the mentioned user a new nickname in the guild.")
     @app_commands.describe(member="The member to edit.", nickname="The nickname to set.")
+    @commands.guild_only()
     @has_permission("manage_nicknames")
     async def rename(self, ctx: commands.Context, member: discord.Member, nickname: str = None):
         await member.edit(nick=nickname)
@@ -415,6 +453,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="topic", description="Change a channel's topic.")
     @app_commands.describe(channel="The channel to edit.", topic="The topic to set.")
+    @commands.guild_only()
     @has_permission("manage_channels")
     async def topic(self, ctx: commands.Context, topic: str = None, channel: discord.TextChannel = None):
         channel = channel or ctx.channel
@@ -426,6 +465,7 @@ class Moderation(commands.Cog):
         
     @commands.command(name="naughty", description="Temporarily make a channel NSFW for 30 seconds")
     @app_commands.describe(channel="The channel to make naughty.")
+    @commands.guild_only()
     @has_permission("manage_channels")
     async def naughty(self, ctx: commands.Context, channel: discord.TextChannel = None):
         channel = channel or ctx.channel

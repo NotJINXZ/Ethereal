@@ -11,6 +11,7 @@ class Information(commands.GroupCog):
         
     @commands.hybrid_group(name="emoji", description="Returns a large emoji or server emote", fallback="view")
     @app_commands.describe(emoji="The emoji to view.")
+    @commands.guild_only()
     async def emoji(self, ctx: commands.Context, emoji: discord.Emoji):
         with Image.open(requests.get(emoji.url, stream=True).raw) as img:
             img = img.resize((256, 256))
@@ -24,6 +25,7 @@ class Information(commands.GroupCog):
 
     @emoji.command(name="remove", description="Removes emote from server.", aliases=["delete"])
     @app_commands.describe(emoji="The emoji to remove.")
+    @commands.guild_only()
     @has_permission("manage_expressions")
     async def emoji_remove(self, ctx: commands.Context, emoji: discord.Emoji):
         await emoji.delete(reason="Emoji remove command.")
@@ -31,6 +33,8 @@ class Information(commands.GroupCog):
         
 
     @commands.hybrid_command(name="osu", description="Retrieve simple OSU! profile information.")
+    @app_commands.describe(username="The username to lookup", game="The game to load stats for.")
+    @commands.guild_only()
     async def osu(self, ctx: commands.Context, username: str, game: str):
         games = ['std', 'taiko', 'ctb', 'mania']
         if game.lower() not in games:
