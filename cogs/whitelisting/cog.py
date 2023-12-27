@@ -1,10 +1,11 @@
 from universal import *
 import os, json
+from urllib.parse import urlparse
 
 class Whitelisting(commands.GroupCog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
-        self.enabled = True # Enable the whitelisting system?
+        self.enabled = config.whitelist_enabled # Enable the whitelisting system?
         #self.allowed_servers = []
         self.path = os.path.join(os.getcwd(), "whitelisted.json")
     
@@ -18,12 +19,18 @@ class Whitelisting(commands.GroupCog):
                     added_by = entry.user
 
                     if event_type == 'join':
-                        await added_by.send(embed=Embed("error", "Hey there! Unfortunately, your server has not been authorized to use this bot. Please contact our support system if this is an error. Have a nice day!"))
+                        embed=Embed("error", "Hey there! Unfortunately, your server has not been authorized to use this bot. Please contact our support system if this is an error. Have a nice day!")
                     elif event_type == 'message':
-                        await added_by.send(embed=Embed("error", "Hey there! It seems that either the whitelisting system has been disabled, or your whitelisted status was revoked, so I left your server. Please contact our support system if this is an error. Have a nice day!"))
+                        embed=Embed("error", "Hey there! It seems that either the whitelisting system has been disabled, or your whitelisted status was revoked, so I left your server. Please contact our support system if this is an error. Have a nice day!")
                     else:
                         raise ValueError("Invalid event type.")
 
+                    embeds = [embed]
+                    if config.whitelist_dashboard:
+                        embed1 = discord.Embed(title="Whitelist your server!", description=f"To whitelist your server, visit [{urlparse(config.whitelist_dashboard_link).netloc}]({config.whitelist_dashboard_link + '?id={}'.format(server.id)})", color=discord.Color.blurple())
+                        embeds.append(embed1)
+
+                    await added_by.send(embeds=embeds)
                     await server.leave()
 
     def is_server_authorized(self, server):
