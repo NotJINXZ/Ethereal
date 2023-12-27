@@ -33,7 +33,14 @@ def get_discord_guilds(access_token):
 @app.route("/")
 def index():
     if 'access_token' not in session:
-        return redirect(url_for('login'))
+        url = "/login" + "?id={}".format(request.args.get("id"))
+        return redirect(url)
+    
+    if session.get("guild_id"):
+        gid = session["guild_id"]
+        print(gid)
+        session.pop("guild_id")
+        return redirect("/?id=" + str(gid))
     
     user_info = get_discord_user(session['access_token'])
     user_id = user_info.get('id', None)
@@ -63,15 +70,21 @@ def callback():
     else:
         return "Failed to obtain access token."
 
-@app.route("/login")
+@app.route('/login')
 def login():
     authorize_url = "https://discord.com/api/oauth2/authorize"
+
+    redirected_id = request.args.get('id')
+    if redirected_id:
+        session['guild_id'] = redirected_id
+
     params = {
         "client_id": config["client_id"],
         "redirect_uri": config["redirect_uri"],
         "response_type": "code",
         "scope": "identify guilds",
     }
+
     login_url = f"{authorize_url}?{'&'.join(f'{key}={value}' for key, value in params.items())}"
     return redirect(login_url)
 
