@@ -76,7 +76,7 @@ if __name__ == "__main__":
         import backend.server
         process_thread = threading.Thread(target=backend.server.start)
         process_thread.start()
-        process_thread.join()
+        # process_thread.join()
 
     ethereal.run(config.token)
 
