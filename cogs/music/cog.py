@@ -1,72 +1,167 @@
+import asyncio
+from typing import cast
 from universal import *
-import spotipy
-from wavelink import Client
+import wavelink
 
 class Music(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+        self.skip_votes = {}
 
-        if not hasattr(bot, 'lavalink'):
-            bot.lavalink = Client(bot=bot, host='localhost', port=2333, rest_uri='http://localhost:2333', password='youshallnotpass')
-            bot.lavalink.add_node('localhost', 2333, 'youshallnotpass', 'eu', 'music-node')
+    async def setup_hook(self) -> None:
+        nodes = [wavelink.Node(uri="http://localhost:2333", password="youshallnotpass")]
+        await wavelink.Pool.connect(nodes=nodes, client=self.bot, cache_capacity=100)
 
-        bot.add_listener(self.bot.lavalink.voice_update_handler, 'on_socket_response')
+    @commands.Cog.listener()
+    async def on_wavelink_node_ready(self, payload: wavelink.NodeReadyEventPayload) -> None:
+        print(f"Wavelink Node connected: {payload.node!r} | Resumed: {payload.resumed}")
 
-    # Hybrid Command: Join a voice channel
-    @commands.hybrid_command()
-    async def join(self, ctx: commands.Context):
+    @commands.Cog.listener()
+    async def on_wavelink_track_start(self, payload: wavelink.TrackStartEventPayload) -> None:
+        player: wavelink.Player | None = payload.player
+        if not player:
+            return
+
+        track: wavelink.Playable = payload.track
+
+        embed = discord.Embed(title="Now Playing", description=f"__**{track.title}**__ by **{track.author}**")
+
+        if track.artwork:
+            embed.set_image(url=track.artwork)
+
+        await player.home.send(embed=embed)
+            
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member, before, after):
         try:
-            channel = ctx.author.voice.channel
-            await ctx.voice_channel.connect()
-            await ctx.send("Joined the voice channel!")
-        except AttributeError:
-            await ctx.send("You are not in a voice channel!")
+            if member.id == self.bot.user.id:
+                if before.channel is None and after.channel is not None:
+                    await member.edit(deafen=True)        
+        except discord.errors.Forbidden:
+            pass
 
-    # Hybrid Command: Play a song
-    @commands.hybrid_command()
-    async def play(self, ctx: commands.Context, *, query: str):
+    @commands.hybrid_command(name="play", description="Play audio via LavaLink")
+    @commands.guild_only()
+    @app_commands.describe(query="The query to search for.")
+    async def play(self, ctx: commands.Context, *, query: str) -> None:
+        player: wavelink.Player
+        player = cast(wavelink.Player, ctx.voice_client)
+
+        if not player:
+            try:
+                player = await ctx.author.voice.channel.connect(cls=wavelink.Player)
+            except AttributeError:
+                await ctx.reply(embed=Embed("error", "Please join a voice channel first before using this command."))
+                return
+            except discord.ClientException:
+                await ctx.reply(embed=Embed("error", "I was unable to join this voice channel. Please try again."))
+                return
+
+        player.autoplay = wavelink.AutoPlayMode.enabled
+
+        if not hasattr(player, "home"):
+            player.home = ctx.channel
+        elif player.home != ctx.channel:
+            await ctx.reply(embed=Embed("error", f"You can only play songs in {player.home.mention}, as the player has already started there."))
+            return
+
+        tracks: wavelink.Search = await wavelink.Playable.search(query)
+        if not tracks:
+            await ctx.reply(embed=Embed("error", f"{ctx.author.mention} - Could not find any tracks with that query. Please try again."))
+            return
+
+        if isinstance(tracks, wavelink.Playlist):
+            added: int = await player.queue.put_wait(tracks)
+            await ctx.reply(embed=Embed("success", f"Added the playlist **`{tracks.name}`** ({added} songs) to the queue."))
+        else:
+            track: wavelink.Playable = tracks[0]
+            await player.queue.put_wait(track)
+            await ctx.reply(embed=Embed("success", f"Added **`{track}`** to the queue."))
+
+        if not player.playing:
+            await player.play(player.queue.get(), volume=30)
+
         try:
-            player = self.bot.lavalink.get_player(ctx.guild.id)
+            await ctx.message.delete()
+        except discord.HTTPException:
+            pass
 
-            if not player.is_connected:
-                channel = ctx.author.voice.channel
-                await ctx.voice_channel.connect()
+    @commands.hybrid_command(name="skip", description="Call a vote skip or forcefully skip the current song.")
+    async def skip(self, ctx: commands.Context, force: bool = False) -> None:
+        player: wavelink.Player = ctx.voice_client
 
-            tracks = await self.bot.lavalink.get_tracks(query)
+        if not player:
+            return await ctx.reply(embed=Embed("error", "I'm not connected to a voice channel."))
 
-            if not tracks:
-                return await ctx.send('No results found.')
+        if not force and ctx.channel.id in self.skip_votes:
+            return await ctx.reply(embed=Embed("info", "A vote skip is in progress. Use `skip force=True` to force skip the track."))
 
-            embed = discord.Embed(color=discord.Color.blurple())
+        if ctx.author.guild_permissions.administrator:
+            await player.skip(force=True)
+            return await ctx.message.add_reaction(success_emoji)
 
-            if 'list' in query.lower():
-                embed.title = 'Search results'
-                for track in tracks:
-                    embed.add_field(name=track['info']['title'], value=f"[{track['info']['uri']}]({track['info']['uri']})")
+        if ctx.author.id in self.skip_votes.get(ctx.channel.id, set()):
+            return await ctx.send("You have already voted to skip this track in this channel.")
 
-                return await ctx.send(embed=embed)
+        self.skip_votes.setdefault(ctx.channel.id, set()).add(ctx.author.id)
 
-            track = tracks[0]
+        channel_members = [
+            member for member in ctx.author.voice.channel.members if not member.bot
+        ]
+        required_votes = int(0.75 * len(channel_members))
 
-            player.add(requester=ctx.author.id, track=track)
+        if len(self.skip_votes.get(ctx.channel.id, set())) >= required_votes:
+            await player.skip(force=True)
+            await ctx.message.add_reaction(success_emoji)
+            self.skip_votes.pop(ctx.channel.id, None)
+            return await ctx.send(embed=Embed("info", "Vote to skip succeeded! The track has been skipped."))
+        else:
+            await ctx.reply(embed=Embed("info", f"Vote to skip registered. {len(self.skip_votes.get(ctx.channel.id, set()))}/{required_votes} votes received."))
 
-            if not player.is_playing:
-                await player.play()
+    @commands.hybrid_command(name="nightcore", description="Enable nightcore mode on the current player. (Higher pitch and speed)")
+    async def nightcore(self, ctx: commands.Context) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player:
+            return
 
-            await ctx.send(f'Now playing: {track["info"]["title"]}')
-        except (AttributeError, discord.ClientException):
-            await ctx.send("Not connected to a voice channel. Use !join to summon me!")
-        except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
+        filters: wavelink.Filters = player.filters
+        filters.timescale.set(pitch=1.2, speed=1.2, rate=1)
+        await player.set_filters(filters)
 
-    # Hybrid Command: Disconnect from the voice channel
-    @commands.hybrid_command()
-    async def leave(self, ctx: commands.Context):
-        try:
-            await ctx.voice_channel.disconnect()
-            await ctx.send("Left the voice channel!")
-        except AttributeError:
-            await ctx.send("I'm not connected to a voice channel!")
+        await ctx.message.add_reaction(success_emoji)
 
-def setup(bot):
-    bot.add_cog(Music(bot))
+    @commands.hybrid_command(name="toggle", aliases=["pause", "resume"], description="Pause/Resume playback of the player.")
+    @commands.guild_only()
+    async def pause_resume(self, ctx: commands.Context) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player:
+            return
+
+        await player.pause(not player.paused)
+        await ctx.message.add_reaction(success_emoji)
+
+    @commands.hybrid_command(name="volume", description="Set the current volume of the player.")
+    @commands.guild_only()
+    @app_commands.describe(value="The volume to set.")
+    async def volume(self, ctx: commands.Context, value: int) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player:
+            return
+
+        await player.set_volume(value)
+        await ctx.message.add_reaction(success_emoji)
+
+    @commands.hybrid_command(name="disconnect", description="Disconnect the player from the current channel.", aliases=["dc", "stop"])
+    @commands.guild_only()
+    async def disconnect(self, ctx: commands.Context) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player:
+            return
+
+        await player.disconnect()
+        await ctx.message.add_reaction(success_emoji)
+
+async def setup(bot):
+    cog = Music(bot)
+    await bot.add_cog(cog)
+    await asyncio.create_task(cog.setup_hook())

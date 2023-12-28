@@ -1,0 +1,44 @@
+server:
+  port: 2333
+  address: 0.0.0.0
+  password: youshallnotpass
+  sources:
+    youtube: true
+    soundcloud: true
+    twitch: true
+    vimeo: true
+    mixer: true
+    bandcamp: true
+    http: true
+    local: false
+    yandex: false
+    audioboom: false
+    audius: false
+
+lavalink:
+  server:
+    password: youshallnotpass
+    sources:
+      youtube: true
+      soundcloud: true
+      twitch: true
+      vimeo: true
+      mixer: true
+      bandcamp: true
+      http: true
+      local: false
+      yandex: false
+      audioboom: false
+      audius: false
+  opus:
+    enabled: true
+    use-lavaplayer: false
+    use-fdk: true
+
+metrics:
+  prometheus:
+    enabled: false
+    endpoint: /metrics
+    labels:
+      shard: "example"
+      other-label: "example-2"

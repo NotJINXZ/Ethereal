@@ -65,3 +65,7 @@ def convert_time(time_str):
         total_seconds = weeks * 604800 + days * 86400 + hours * 3600 + minutes * 60 + seconds
         return total_seconds
     return None
+
+success_emoji = discord.PartialEmoji(name="approve", id=1186447714175701043)
+error_emoji = discord.PartialEmoji(name="deny", id=1186447716608376868)
+warn_emoji = discord.PartialEmoji(name="warning", id=1186447712246321222)
