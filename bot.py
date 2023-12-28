@@ -5,6 +5,8 @@ from config import Config
 from universal import *
 from database import *
 import os
+import subprocess
+import signal
 
 ethereal = commands.Bot(command_prefix=None, intents=discord.Intents.all())
 
@@ -68,5 +70,14 @@ async def sync(ctx: commands.Context):
         await ctx.reply(content=f"Error: {e}")
         print(f"Error: {e}")
     
+
 if __name__ == "__main__":
+    if config.whitelist_dashboard:
+        import backend.server
+        process_thread = threading.Thread(target=backend.server.start)
+        process_thread.start()
+        process_thread.join()
+
     ethereal.run(config.token)
+
+    print("Program exited.")

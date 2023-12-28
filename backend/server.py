@@ -3,11 +3,12 @@ import sys
 import json
 import requests
 import discord
+import os
 
-with open("config.json", "r") as r:
+with open(".\\backend\\config.json", "r") as r:
     config = json.load(r)
 
-app = Flask(__name__, template_folder="html", static_folder="static")
+app = Flask(__name__, template_folder=os.path.join(os.getcwd(), "frontend\\html"), static_folder=os.path.join(os.getcwd(), "frontend\\static"))
 app.secret_key = "placeholder"
 
 DISCORD_API_URL = "https://discord.com/api"
@@ -125,12 +126,12 @@ def whitelist():
         if not owner:
             return jsonify({'message': 'You do not own that server.', 'error': True}), 401
 
-        with open("..\\whitelisted.json", "r") as r:
+        with open("whitelisted.json", "r") as r:
             data = json.load(r)
         
         data[str(server_id)] = True
         
-        with open("..\\whitelisted.json", "w") as w:
+        with open("whitelisted.json", "w") as w:
             json.dump(data, w)
         
         return jsonify({'message': 'Server whitelisted successfully.'}), 200
@@ -140,14 +141,19 @@ def whitelist():
 
         return jsonify({'message': 'An error occurred while processing the request', 'error': True}), 500
 
-if __name__ == "__main__":
-    PORT = 1122
-    HOST = "0.0.0.0"
+def start(production: bool = True):
+    print(app.template_folder, app.static_folder)
 
-    if "--production" in sys.argv:
-        import waitress
-        print("Running in production mode on port: {}.".format(PORT))
-        waitress.serve(app, host=HOST, port=PORT)
-    else:
-        print("Running in debugging mode on port: {}.".format(PORT))
-        app.run(host=HOST, port=PORT, debug=True)
+    try:
+        PORT = 1122
+        HOST = "0.0.0.0"
+
+        if production:
+            import waitress
+            print("Running in production mode on port: {}.".format(PORT))
+            waitress.serve(app, host=HOST, port=PORT)
+        else:
+            print("Running in debugging mode on port: {}.".format(PORT))
+            app.run(host=HOST, port=PORT, debug=True)
+    except KeyboardInterrupt:
+        raise SystemExit

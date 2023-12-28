@@ -155,3 +155,5 @@ cython_debug/
 ### CUSTOM IGNORES ###
 whitelisted.json
 backend/config.json
+utils
+audio

@@ -17,8 +17,10 @@ class Config:
         self.osu = os.getenv("OSU_APIKEY")
         self.whitelist_access = conf["bot"]["whitelist"]
         self.whitelist_enabled = True
-        self.whitelist_dashboard = True # Enable dashboard so users can whitelist their server ?
-        self.whitelist_dashboard_link = "http://localhost:1122"
+        self.whitelist_dashboard = False # Enable dashboard so users can whitelist their server ?
+        self.whitelist_dashboard_link = "https://ethereal.jinxz.dev"
+        self.spotify_client_id = os.getenv("SPOTIFY_CLIENT_ID")
+        self.spotify_client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
 
 # if __name__ == "__main__":
 #     config = Config()

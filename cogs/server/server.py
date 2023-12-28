@@ -55,23 +55,20 @@ class Server(commands.Cog):
         message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
         await message.unpin(reason=f"Message unpinned via @{ctx.author.name}")
         
-        await ctx.reply(embed=Embed("approve", "Unpinned message."))
+        await ctx.reply(embed=Embed("success", "Unpinned message."))
     
     @commands.command(name="pin", description="Pin a message.")
     @has_permission("manage_messages")
-    async def pin(self, ctx: commands.Context, message: str = None):
-        if message:
-            pass
-        
-        
+    async def pin(self, ctx: commands.Context):
         if not ctx.message.reference:
             await ctx.reply(embed=Embed("error", "You did not reply to a message."))
             return
-        
+
         message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-        await message.unpin(reason=f"Message unpinned via @{ctx.author.name}")
         
-        await ctx.reply(embed=Embed("approve", "Unpinned message."))
+        await message.pin(reason=f"Message unpinned via @{ctx.author.name}")
+        
+        await ctx.reply(embed=Embed("success", "Pinned message."))
     
         
 

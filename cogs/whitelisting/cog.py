@@ -2,7 +2,7 @@ from universal import *
 import os, json
 from urllib.parse import urlparse
 
-class Whitelisting(commands.GroupCog):
+class Whitelisting(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
         self.enabled = config.whitelist_enabled # Enable the whitelisting system?
