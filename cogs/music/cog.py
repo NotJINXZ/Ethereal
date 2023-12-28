@@ -62,26 +62,28 @@ class Music(commands.Cog):
         if not hasattr(player, "home"):
             player.home = ctx.channel
         elif player.home != ctx.channel:
-            await ctx.reply(embed=Embed("error", f"You can only play songs in {player.home.mention}, as the player has already started there."))
+            message = await ctx.reply(embed=Embed("error", f"You can only play songs in {player.home.mention}, as the player has already started there."))
             return
 
         tracks: wavelink.Search = await wavelink.Playable.search(query)
         if not tracks:
-            await ctx.reply(embed=Embed("error", f"{ctx.author.mention} - Could not find any tracks with that query. Please try again."))
+            message = await ctx.reply(embed=Embed("error", f"{ctx.author.mention} - Could not find any tracks with that query. Please try again."))
             return
 
         if isinstance(tracks, wavelink.Playlist):
             added: int = await player.queue.put_wait(tracks)
-            await ctx.reply(embed=Embed("success", f"Added the playlist **`{tracks.name}`** ({added} songs) to the queue."))
+            message = await ctx.reply(embed=Embed("success", f"Added the playlist **`{tracks.name}`** ({added} songs) to the queue."))
         else:
             track: wavelink.Playable = tracks[0]
             await player.queue.put_wait(track)
-            await ctx.reply(embed=Embed("success", f"Added **`{track}`** to the queue."))
+            message = await ctx.reply(embed=Embed("success", f"Added **`{track}`** to the queue."))
 
         if not player.playing:
             await player.play(player.queue.get(), volume=30)
 
         try:
+            await asyncio.sleep(15)
+            await message.delete()
             await ctx.message.delete()
         except discord.HTTPException:
             pass

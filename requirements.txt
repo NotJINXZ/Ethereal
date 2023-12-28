@@ -3,3 +3,4 @@ python-dotenv
 pymongo
 Pillow
 requests
+wavelink
