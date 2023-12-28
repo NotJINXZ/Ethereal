@@ -183,7 +183,12 @@ class Music(commands.Cog):
         player.queue.shuffle()
         await ctx.message.add_reaction(success_emoji)
 
-    @commands.hybrid_command(name="np", description="Show information about the currently playing track.")
+    def format_time(seconds: int) -> str:
+        minutes, seconds = divmod(seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+        return f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
+
+    @commands.hybrid_command(name="np", description="Show information about the currently playing track with current time and progress bar.")
     @commands.guild_only()
     async def now_playing(self, ctx: commands.Context) -> None:
         player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
@@ -191,8 +196,16 @@ class Music(commands.Cog):
             return await ctx.reply(embed=Embed("error", "No track is currently playing."))
 
         track: wavelink.Playable = player.current
-        embed = discord.Embed(title="Now Playing", description=f"__**{track.title}**__ by **{track.author}**")
+        position = player.position
+        duration = track.length
 
+        progress_bar_length = 20
+        progress_bar = int(progress_bar_length * (position / duration))
+        progress = f"{'=' * progress_bar}>{'.' * (progress_bar_length - progress_bar)}"
+
+        embed = discord.Embed(title="Now Playing", description=f"__**{track.title}**__ by **{track.author}**\n\n"
+                                                              f"**Time:** {self.format_time(position)} / {self.format_time(duration)}\n"
+                                                              f"**Progress:** [{progress}]")
         if track.artwork:
             embed.set_image(url=track.artwork)
 
@@ -208,6 +221,80 @@ class Music(commands.Cog):
         filters: wavelink.Filters = player.filters
         filters.reset()
         await player.set_filters(filters)
+        await ctx.message.add_reaction(success_emoji)
+    
+    @commands.hybrid_command(name="restart", description="Restart the current song.")
+    @commands.guild_only()
+    async def restart(self, ctx: commands.Context) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player or not player.current:
+            return await ctx.reply(embed=Embed("error", "No track is currently playing."))
+
+        await player.seek(0)
+        await ctx.message.add_reaction(success_emoji)
+        
+    @commands.hybrid_command(name="bassboost", description="Apply bass boost filter to the player.")
+    @commands.guild_only()
+    async def bass_boost(self, ctx: commands.Context) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player:
+            return
+
+        filters: wavelink.Filters = player.filters
+        filters.equalizer.set(0, 0.5)
+        await player.set_filters(filters)
+        await ctx.message.add_reaction(success_emoji)
+        
+    @commands.hybrid_command(name="trebleboost", description="Apply treble boost filter to the player.")
+    @commands.guild_only()
+    async def treble_boost(self, ctx: commands.Context) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player:
+            return
+
+        filters: wavelink.Filters = player.filters
+        filters.equalizer.set(0, 1.5)
+        await player.set_filters(filters)
+        await ctx.message.add_reaction(success_emoji)
+
+    @commands.hybrid_command(name="vaporwave", description="Apply vaporwave filter to the player.")
+    @commands.guild_only()
+    async def vaporwave(self, ctx: commands.Context) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player:
+            return
+
+        filters: wavelink.Filters = player.filters
+        filters.timescale.set(pitch=0.5, speed=0.5, rate=1)
+        await player.set_filters(filters)
+        await ctx.message.add_reaction(success_emoji)
+        
+    @commands.hybrid_command(name="skipto", description="Skip to a specific song in the queue.")
+    @commands.guild_only()
+    @app_commands.describe(index="The index of the song in the queue to skip to.")
+    async def skip_to(self, ctx: commands.Context, index: int) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player or not player.queue:
+            return await ctx.reply(embed=Embed("error", "The queue is empty."))
+
+        if not (1 <= index <= player.queue.length):
+            return await ctx.reply(embed=Embed("error", "Invalid index. Please provide a valid index in the queue."))
+
+        await player.queue.skip_to(index - 1)
+        await ctx.message.add_reaction(success_emoji)
+
+    @commands.hybrid_command(name="move", description="Move a song to the top of the queue.")
+    @commands.guild_only()
+    @app_commands.describe(index="The index of the song in the queue to move to the top.")
+    async def move(self, ctx: commands.Context, index: int) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player or not player.queue:
+            return await ctx.reply(embed=Embed("error", "The queue is empty."))
+
+        if not (1 <= index <= player.queue.length):
+            return await ctx.reply(embed=Embed("error", "Invalid index. Please provide a valid index in the queue."))
+
+        await player.queue.move_to_top(index - 1)
         await ctx.message.add_reaction(success_emoji)
 
 async def setup(bot):
