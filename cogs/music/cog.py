@@ -183,7 +183,7 @@ class Music(commands.Cog):
         player.queue.shuffle()
         await ctx.message.add_reaction(success_emoji)
 
-    def format_time(seconds: int) -> str:
+    def format_time(self, seconds: int) -> str:
         minutes, seconds = divmod(seconds, 60)
         hours, minutes = divmod(minutes, 60)
         return f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
@@ -241,7 +241,7 @@ class Music(commands.Cog):
             return
 
         filters: wavelink.Filters = player.filters
-        filters.equalizer.set(0, 0.5)
+        filters.equalizer.set(bands=[{"band": 0, "gain": 0.5}])
         await player.set_filters(filters)
         await ctx.message.add_reaction(success_emoji)
         
@@ -253,7 +253,7 @@ class Music(commands.Cog):
             return
 
         filters: wavelink.Filters = player.filters
-        filters.equalizer.set(0, 1.5)
+        filters.equalizer.set(bands=[{"band": 1, "gain": 1.5}])
         await player.set_filters(filters)
         await ctx.message.add_reaction(success_emoji)
 
@@ -268,34 +268,7 @@ class Music(commands.Cog):
         filters.timescale.set(pitch=0.5, speed=0.5, rate=1)
         await player.set_filters(filters)
         await ctx.message.add_reaction(success_emoji)
-        
-    @commands.hybrid_command(name="skipto", description="Skip to a specific song in the queue.")
-    @commands.guild_only()
-    @app_commands.describe(index="The index of the song in the queue to skip to.")
-    async def skip_to(self, ctx: commands.Context, index: int) -> None:
-        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
-        if not player or not player.queue:
-            return await ctx.reply(embed=Embed("error", "The queue is empty."))
 
-        if not (1 <= index <= player.queue.length):
-            return await ctx.reply(embed=Embed("error", "Invalid index. Please provide a valid index in the queue."))
-
-        await player.queue.skip_to(index - 1)
-        await ctx.message.add_reaction(success_emoji)
-
-    @commands.hybrid_command(name="move", description="Move a song to the top of the queue.")
-    @commands.guild_only()
-    @app_commands.describe(index="The index of the song in the queue to move to the top.")
-    async def move(self, ctx: commands.Context, index: int) -> None:
-        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
-        if not player or not player.queue:
-            return await ctx.reply(embed=Embed("error", "The queue is empty."))
-
-        if not (1 <= index <= player.queue.length):
-            return await ctx.reply(embed=Embed("error", "Invalid index. Please provide a valid index in the queue."))
-
-        await player.queue.move_to_top(index - 1)
-        await ctx.message.add_reaction(success_emoji)
 
 async def setup(bot):
     cog = Music(bot)
