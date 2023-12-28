@@ -40,6 +40,19 @@ class Music(commands.Cog):
         except discord.errors.Forbidden:
             pass
 
+    async def check_voice_channel(self, ctx: commands.Context) -> bool:
+        if not ctx.author.voice or not ctx.author.voice.channel:
+            await ctx.reply(embed=Embed("error", "Please join a voice channel first before using this command."))
+            return False
+
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+
+        if not player or player.channel.id != ctx.author.voice.channel.id:
+            await ctx.reply(embed=Embed("error", "You must be in the same voice channel as the bot to use this command."))
+            return False
+
+        return True
+
     @commands.hybrid_command(name="play", description="Play audio via LavaLink")
     @commands.guild_only()
     @app_commands.describe(query="The query to search for.")
@@ -93,7 +106,11 @@ class Music(commands.Cog):
         player: wavelink.Player = ctx.voice_client
 
         if not player:
+            await ctx.reply(embed=Embed("error", "Player could not be found."))
             return await ctx.reply(embed=Embed("error", "I'm not connected to a voice channel."))
+
+        if not await self.check_voice_channel(ctx):
+            return
 
         if not force and ctx.channel.id in self.skip_votes:
             return await ctx.reply(embed=Embed("info", "A vote skip is in progress. Use `skip force=True` to force skip the track."))
@@ -124,6 +141,10 @@ class Music(commands.Cog):
     async def nightcore(self, ctx: commands.Context) -> None:
         player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
         if not player:
+            await ctx.reply(embed=Embed("error", "Player could not be found."))
+            return
+
+        if not await self.check_voice_channel(ctx):
             return
 
         filters: wavelink.Filters = player.filters
@@ -137,6 +158,7 @@ class Music(commands.Cog):
     async def pause_resume(self, ctx: commands.Context) -> None:
         player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
         if not player:
+            await ctx.reply(embed=Embed("error", "Player could not be found."))
             return
 
         await player.pause(not player.paused)
@@ -148,6 +170,10 @@ class Music(commands.Cog):
     async def volume(self, ctx: commands.Context, value: int) -> None:
         player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
         if not player:
+            await ctx.reply(embed=Embed("error", "Player could not be found."))
+            return
+
+        if not await self.check_voice_channel(ctx):
             return
 
         await player.set_volume(value)
@@ -158,6 +184,10 @@ class Music(commands.Cog):
     async def disconnect(self, ctx: commands.Context) -> None:
         player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
         if not player:
+            await ctx.reply(embed=Embed("error", "Player could not be found."))
+            return
+
+        if not await self.check_voice_channel(ctx):
             return
 
         await player.disconnect()
@@ -170,6 +200,9 @@ class Music(commands.Cog):
         if not player or not player.queue:
             return await ctx.reply(embed=Embed("error", "The queue is empty."))
 
+        if not await self.check_voice_channel(ctx):
+            return
+
         queue_info = "\n".join(f"**{index + 1}.** {track}" for index, track in enumerate(player.queue))
         await ctx.reply(embed=Embed("info", f"**Current Queue:**\n{queue_info}"))
 
@@ -179,6 +212,9 @@ class Music(commands.Cog):
         player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
         if not player or not player.queue:
             return await ctx.reply(embed=Embed("error", "The queue is empty."))
+
+        if not await self.check_voice_channel(ctx):
+            return
 
         player.queue.shuffle()
         await ctx.message.add_reaction(success_emoji)
@@ -194,6 +230,9 @@ class Music(commands.Cog):
         player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
         if not player or not player.current:
             return await ctx.reply(embed=Embed("error", "No track is currently playing."))
+
+        if not await self.check_voice_channel(ctx):
+            return
 
         track: wavelink.Playable = player.current
         position = player.position
@@ -211,11 +250,25 @@ class Music(commands.Cog):
 
         await ctx.reply(embed=embed)
 
-    @commands.hybrid_command(name="resetfilter", description="Reset any applied filters on the player.")
+    @commands.hybrid_group(name="filter")
+    @commands.guild_only()
+    async def Filter(self, ctx: commands.Context):
+        text = "Avalible filter commands are:\n"
+        for command in self.Filter.commands:
+            text += f"{ctx.prefix}filter {command.name}\n"
+            
+        text.strip()
+        await ctx.reply(embed=Embed("info", text))
+    
+    @Filter.command(name="reset", description="Reset any applied filters on the player.")
     @commands.guild_only()
     async def reset_filter(self, ctx: commands.Context) -> None:
         player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
         if not player:
+            await ctx.reply(embed=Embed("error", "Player could not be found."))
+            return
+
+        if not await self.check_voice_channel(ctx):
             return
 
         filters: wavelink.Filters = player.filters
@@ -230,14 +283,21 @@ class Music(commands.Cog):
         if not player or not player.current:
             return await ctx.reply(embed=Embed("error", "No track is currently playing."))
 
+        if not await self.check_voice_channel(ctx):
+            return
+
         await player.seek(0)
         await ctx.message.add_reaction(success_emoji)
         
-    @commands.hybrid_command(name="bassboost", description="Apply bass boost filter to the player.")
+    @Filter.command(name="bassboost", description="Apply bass boost filter to the player.")
     @commands.guild_only()
     async def bass_boost(self, ctx: commands.Context) -> None:
         player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
         if not player:
+            await ctx.reply(embed=Embed("error", "Player could not be found."))
+            return
+
+        if not await self.check_voice_channel(ctx):
             return
 
         filters: wavelink.Filters = player.filters
@@ -245,11 +305,15 @@ class Music(commands.Cog):
         await player.set_filters(filters)
         await ctx.message.add_reaction(success_emoji)
         
-    @commands.hybrid_command(name="trebleboost", description="Apply treble boost filter to the player.")
+    @Filter.command(name="trebleboost", description="Apply treble boost filter to the player.")
     @commands.guild_only()
     async def treble_boost(self, ctx: commands.Context) -> None:
         player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
         if not player:
+            await ctx.reply(embed=Embed("error", "Player could not be found."))
+            return
+
+        if not await self.check_voice_channel(ctx):
             return
 
         filters: wavelink.Filters = player.filters
@@ -257,11 +321,15 @@ class Music(commands.Cog):
         await player.set_filters(filters)
         await ctx.message.add_reaction(success_emoji)
 
-    @commands.hybrid_command(name="vaporwave", description="Apply vaporwave filter to the player.")
+    @Filter.command(name="vaporwave", description="Apply vaporwave filter to the player.")
     @commands.guild_only()
     async def vaporwave(self, ctx: commands.Context) -> None:
         player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
         if not player:
+            await ctx.reply(embed=Embed("error", "Player could not be found."))
+            return
+
+        if not await self.check_voice_channel(ctx):
             return
 
         filters: wavelink.Filters = player.filters
