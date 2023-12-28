@@ -151,7 +151,7 @@ class Music(commands.Cog):
             return
 
         await player.set_volume(value)
-        await ctx.message.add_reaction(success_emoji)
+        await ctx.reply(embed=Embed("success", f"Set volume to {value}."))
 
     @commands.hybrid_command(name="disconnect", description="Disconnect the player from the current channel.", aliases=["dc", "stop"])
     @commands.guild_only()
@@ -161,6 +161,53 @@ class Music(commands.Cog):
             return
 
         await player.disconnect()
+        await ctx.reply(embed=Embed("success", f"Adios 👋"))
+        
+    @commands.hybrid_command(name="queue", description="View the current queue.")
+    @commands.guild_only()
+    async def queue(self, ctx: commands.Context) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player or not player.queue:
+            return await ctx.reply(embed=Embed("error", "The queue is empty."))
+
+        queue_info = "\n".join(f"**{index + 1}.** {track}" for index, track in enumerate(player.queue))
+        await ctx.reply(embed=Embed("info", f"**Current Queue:**\n{queue_info}"))
+
+    @commands.hybrid_command(name="shuffle", description="Shuffle the current queue.")
+    @commands.guild_only()
+    async def shuffle(self, ctx: commands.Context) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player or not player.queue:
+            return await ctx.reply(embed=Embed("error", "The queue is empty."))
+
+        player.queue.shuffle()
+        await ctx.message.add_reaction(success_emoji)
+
+    @commands.hybrid_command(name="np", description="Show information about the currently playing track.")
+    @commands.guild_only()
+    async def now_playing(self, ctx: commands.Context) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player or not player.current:
+            return await ctx.reply(embed=Embed("error", "No track is currently playing."))
+
+        track: wavelink.Playable = player.current
+        embed = discord.Embed(title="Now Playing", description=f"__**{track.title}**__ by **{track.author}**")
+
+        if track.artwork:
+            embed.set_image(url=track.artwork)
+
+        await ctx.reply(embed=embed)
+
+    @commands.hybrid_command(name="resetfilter", description="Reset any applied filters on the player.")
+    @commands.guild_only()
+    async def reset_filter(self, ctx: commands.Context) -> None:
+        player: wavelink.Player = cast(wavelink.Player, ctx.voice_client)
+        if not player:
+            return
+
+        filters: wavelink.Filters = player.filters
+        filters.reset()
+        await player.set_filters(filters)
         await ctx.message.add_reaction(success_emoji)
 
 async def setup(bot):
